@@ -33,3 +33,4 @@ training and the app run. Delete it and use the real dataset for any results you
 ## Notes
 - Match score falls back to TF-IDF similarity if the sentence-transformer model can't be loaded (e.g. offline).
 - Resumes are embedded in chunks (the model reads ~256 tokens at a time).
+"# ResumeScreener" 
