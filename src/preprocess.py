@@ -19,3 +19,8 @@ def extract_text(file) -> str:
         with pdfplumber.open(file) as pdf:
             return " ".join(page.extract_text() or "" for page in pdf.pages)
     return file.read().decode("utf-8", errors="ignore")
+
+
+def is_low_text(raw: str, min_words: int = 50) -> bool:
+    """True if almost no text was extracted (e.g. scanned/image PDF or odd layout)."""
+    return len(raw.split()) < min_words

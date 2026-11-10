@@ -4,7 +4,7 @@ import joblib
 import pandas as pd
 import streamlit as st
 
-from src.preprocess import clean_text, extract_text
+from src.preprocess import clean_text, extract_text, is_low_text
 from src.skills import extract_skills
 from src.explain import top_contributing_words
 from src.match import match_score
@@ -32,6 +32,11 @@ with tab1:
     f = st.file_uploader("Upload a resume (PDF or TXT)", type=["pdf", "txt"], key="single")
     if f:
         raw = extract_text(f)
+        if is_low_text(raw):
+            st.warning("Very little text could be read from this file (scanned or image-based PDF?). "
+                       "Results may be unreliable.")
+        with st.expander("Show extracted text"):
+            st.text(raw[:3000] or "(nothing extracted)")
         clean = clean_text(raw)
         probs = model.predict_proba([clean])[0]
         top3 = sorted(zip(model.classes_, probs), key=lambda x: -x[1])[:3]
@@ -59,6 +64,8 @@ with tab1:
                 st.write(f"Semantic similarity: {r['semantic']}%  |  Required-skill overlap: {r['skill_overlap']}%")
                 st.write("Matched skills:", ", ".join(r["matched"]) or "-")
                 st.write("Missing skills:", ", ".join(r["missing"]) or "-")
+            else:
+                st.info("Paste a job description in the sidebar to see the job match.")
 
 with tab2:
     if not jd.strip():
@@ -67,10 +74,15 @@ with tab2:
                              accept_multiple_files=True, key="multi")
     if files and jd.strip():
         rows = []
+        low = []
         for f in files:
             raw = extract_text(f)
+            if is_low_text(raw):
+                low.append(f.name)
             r = match_score(raw, jd)
             cat = model.predict([clean_text(raw)])[0]
             rows.append({"Resume": f.name, "Category": cat, "Match score": r["score"],
                          "Missing skills": ", ".join(r["missing"])})
-        st.dataframe(pd.DataFrame(rows).sort_values("Match score", ascending=False))
+        if low:
+            st.warning("Very little text could be read from: " + ", ".join(low))
+        st.dataframe(pd.DataFrame(rows).sort_values("Match score", ascending=False).reset_index(drop=True))
