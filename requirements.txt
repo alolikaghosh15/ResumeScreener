@@ -1,0 +1,8 @@
+pandas
+scikit-learn
+joblib
+streamlit
+pdfplumber
+sentence-transformers
+matplotlib
+pyarrow
